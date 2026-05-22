@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   
   // ESTA ES LA LÍNEA QUE ARREGLA EL DISEÑO (CSS/JS)
-  base: './', 
+  base: '/',
 
   define: {
     global: 'globalThis',
