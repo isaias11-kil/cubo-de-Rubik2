@@ -1,12 +1,21 @@
-// frontend/src/utils/cubeSolver.js
 import Cube from 'cubejs';
 
-// Debido a problemas de interop CJS/ESM en Vite en el bundle de producción
-const CubeClass = typeof Cube === 'function' ? Cube : (Cube.default || window.Cube);
+// En Vite, si global = window, cubejs inicializa this.Cube = Cube.
+// De lo contrario puede exportar en el module.
+const CubeClass = typeof Cube === 'function' ? Cube : (window.Cube || globalThis.Cube || Cube.default);
+
+if (!CubeClass) {
+  console.error("Cube is undefined! 'cubejs' module did not load correctly. Here is the imported object:", Cube);
+}
 
 let motorIniciado = false;
 
 export const solveRubik = (cubeState) => {
+  if (!CubeClass) {
+    console.error("No se puede resolver el cubo porque CubeClass no está definido.");
+    return "ERROR_AL_RESOLVER";
+  }
+
   try {
     if (!motorIniciado) {
       try {
