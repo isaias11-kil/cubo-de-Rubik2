@@ -6,7 +6,7 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://157.230.54.54:5000';
 // frontend/src/utils/telemetria.js
 export const registrarEvento = async (tipo, detalles) => {
   try {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/eventos`, {
+    await fetch(`${BACKEND_URL}/api/eventos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
