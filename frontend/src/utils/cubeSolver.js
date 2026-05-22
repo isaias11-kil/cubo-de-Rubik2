@@ -1,21 +1,19 @@
 // frontend/src/utils/cubeSolver.js
-import cubejs from 'cubejs';
+import Cube from 'cubejs';
 
-// En caso de que se importe mal debido a CommonJS / ESM, probamos de esta forma
-const Cube = cubejs.default || cubejs;
+// Debido a problemas de interop CJS/ESM en Vite en el bundle de producción
+const CubeClass = typeof Cube === 'function' ? Cube : (Cube.default || window.Cube);
 
 let motorIniciado = false;
 
 export const solveRubik = (cubeState) => {
   try {
-
     if (!motorIniciado) {
       try {
-        Cube.initSolver();
+        CubeClass.initSolver();
       } catch (e) {
         console.warn("El motor ya estaba iniciado o no requiere initSolver");
       }
-
       motorIniciado = true;
     }
 
@@ -33,27 +31,23 @@ export const solveRubik = (cubeState) => {
 
     for (const face of order) {
       for (let i = 0; i < 9; i++) {
-
         const color = cubeState[face][i];
-
         if (!color) {
           throw new Error(`Falta color en ${face}[${i}]`);
         }
-
         cubeString += colorToFace[color];
       }
     }
 
     console.log("Cube String:", cubeString);
 
-    const cube = Cube.fromString(cubeString);
+    const cube = CubeClass.fromString(cubeString);
 
     if (cube.isSolved()) {
       return "";
     }
 
     return cube.solve();
-
   } catch (error) {
     console.error("❌ Error resolviendo el cubo:", error);
     return "ERROR_AL_RESOLVER";
