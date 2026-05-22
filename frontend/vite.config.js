@@ -8,7 +8,6 @@ export default defineConfig({
     react()
   ],
   
-  // ESTA ES LA LÍNEA QUE ARREGLA EL DISEÑO (CSS/JS)
   base: '/',
 
   define: {
