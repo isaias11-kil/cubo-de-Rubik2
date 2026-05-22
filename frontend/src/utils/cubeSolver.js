@@ -1,6 +1,5 @@
 // frontend/src/utils/cubeSolver.js
-
-
+import Cube from 'cubejs';
 
 let motorIniciado = false;
 

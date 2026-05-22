@@ -1,7 +1,7 @@
 // frontend/src/utils/apiRobot.js
 
 // Apuntamos al nuevo puerto 5005 donde ahora vive el backend (o a la IP de Ubuntu)
-const backendUrl = import.meta.env.VITE_API_URL || 'http://157.230.54.54:5000/api/eventos';
+const backendUrl = import.meta.env.VITE_API_URL || 'http://157.230.54.54:5000';
 
 export const enviarSolucionAlRobot = async (movesList) => {
   try {
