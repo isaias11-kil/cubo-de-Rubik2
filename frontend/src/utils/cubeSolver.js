@@ -1,5 +1,8 @@
 // frontend/src/utils/cubeSolver.js
-import Cube from 'cubejs';
+import cubejs from 'cubejs';
+
+// En caso de que se importe mal debido a CommonJS / ESM, probamos de esta forma
+const Cube = cubejs.default || cubejs;
 
 let motorIniciado = false;
 
