@@ -11,7 +11,7 @@ export default defineConfig({
   base: '/',
 
   define: {
-    global: 'globalThis',
+    global: 'window',
   },
 
   optimizeDeps: {
@@ -19,6 +19,9 @@ export default defineConfig({
   },
 
   build: {
+    rollupOptions: {
+      context: 'window',
+    },
     commonjsOptions: {
       transformMixedEsModules: true,
     }
