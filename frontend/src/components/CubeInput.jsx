@@ -25,6 +25,8 @@ const initialCube = {
 
 export default function CubeInput() {
   // ✅ El estado de Bluetooth regresa a su lugar
+  // Agrega esto a tus estados
+  const [startTime, setStartTime] = useState(null);
   const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
   const [cube, setCube] = useState(initialCube);
   const [activeColor, setActiveColor] = useState('white');
@@ -106,37 +108,73 @@ export default function CubeInput() {
   };
 
   // ✅ Vuelve la conexión Bluetooth
-  const handleConnectBluetooth = async () => {
-    const exito = await conectarBluetooth();
-    if (exito) {
-      setIsBluetoothConnected(true);
-      alert("¡Bluetooth Conectado Exitosamente! 🔵");
-      registrarEvento('conexion_bluetooth', { estado: 'exitosa' });
-    } else {
-      alert("No se pudo conectar. Asegúrate de haber emparejado el HC-05 a tu PC.");
-      registrarEvento('conexion_bluetooth', { estado: 'fallida' });
+  // En CubeInput.jsx
+const handleConnectBluetooth = async () => {
+  // Pasamos una función "callback" que se ejecutará cuando llegue el mensaje
+  const exito = await conectarBluetooth((mensaje) => {
+    console.log("DEBUG: Mensaje recibido en CubeInput:", mensaje);
+
+    // ¡Aquí sí existe la variable mensaje!
+    if (mensaje === "DONE") {
+      finalizarResolucion(); // Llama a la función que ya hiciste
     }
-  };
+  });
+
+  if (exito) {
+    setIsBluetoothConnected(true);
+    alert("¡Bluetooth Conectado Exitosamente! 🔵");
+    registrarEvento('conexion_bluetooth', { estado: 'exitosa' });
+  } else {
+    alert("No se pudo conectar.");
+  }
+};
 
   // ✅ HÍBRIDO: Envía al HC-05 y registra en Ubuntu
   const handleSendToRobot = async () => {
-    if (!movesList) return;
+  try {
+    // 1. CALCULAMOS LOS MOVIMIENTOS USANDO LA VARIABLE movesList
+    // Si movesList existe y es un string, lo dividimos por espacios.
+    // .filter(Boolean) elimina espacios vacíos para contar solo los movimientos reales.
+    const movimientosCalculados = (movesList && typeof movesList === 'string') 
+      ? movesList.trim().split(/\s+/).filter(Boolean).length 
+      : 0;
 
-    // 1. Formateamos para el Arduino
-    const movimientosFormateados = `[${movesList.trim().split(' ').join(',')}]`;
+    console.log("DEBUG: Movimientos calculados desde movesList:", movimientosCalculados);
 
-    alert(`¡Enviando movimientos al HC-05!\nDatos: ${movimientosFormateados}`);
+    // 1. Guardamos el momento exacto en milisegundos
+    setStartTime(Date.now());
 
-    // 2. Disparamos la señal por Bluetooth
-    const enviado = await enviarDatosBluetooth(movimientosFormateados);
+    // 2. REGISTRAMOS EL EVENTO EN TU BASE DE DATOS
+    await registrarEvento("movimientos_enviados_al_robot", {
+      movimientos: movimientosCalculados,
+      tiempo: 0, 
+      cara: "Frontal"
+    });
 
-    // 3. Si el Bluetooth lo envió con éxito, guardamos el log en el servidor
-    if (enviado) {
-      await registrarEvento('movimientos_enviados_al_robot', {
-        secuencia_final: movesList,
-        formato_enviado: movimientosFormateados,
-        via: 'bluetooth_web_serial'
+    // 3. TU LÓGICA EXISTENTE PARA ENVIAR AL ROBOT
+    // ... aquí va el código que activa el Bluetooth o socket ...
+    console.log("Enviando secuencia al robot...");
+
+  } catch (error) {
+    console.error("Error al procesar el envío:", error);
+  }
+};
+
+const finalizarResolucion = async () => {
+    if (startTime) {
+      const endTime = Date.now();
+      const tiempoTotalSegundos = (endTime - startTime) / 1000;
+      
+      console.log("✅ Robot terminó. Tiempo:", tiempoTotalSegundos);
+
+      // Registramos en BD
+      await registrarEvento("cubo_resuelto", {
+        movimientos: 0, // O puedes calcular cuántos quedaron pendientes
+        tiempo: tiempoTotalSegundos,
+        cara: "Frontal"
       });
+      
+      setStartTime(null); // Reseteamos para la próxima vez
     }
   };
 

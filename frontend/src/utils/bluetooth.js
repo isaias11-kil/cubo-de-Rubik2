@@ -1,46 +1,50 @@
 let port = null;
 let writer = null;
+let reader = null; // 👈 Nuevo: necesitamos el lector
 
-export const conectarBluetooth = async () => {
+export const conectarBluetooth = async (onMessageReceived) => { // 👈 Recibe un "aviso"
   try {
-    // Pedimos al usuario que seleccione el puerto
     port = await navigator.serial.requestPort();
-    
-    // Intentamos abrirlo
-    await port.open({ baudRate: 9600 }); 
+    await port.open({ baudRate: 9600 });
     
     writer = port.writable.getWriter();
+    
+    // 👈 NUEVO: Iniciamos el bucle de lectura en segundo plano
+    leerDatos(onMessageReceived); 
+
     return true;
-
   } catch (error) {
-    // 💡 TRUCO: Si el error dice que ya está abierto, lo tomamos como un éxito
     if (error.name === 'InvalidStateError' || error.message.includes('already open')) {
-      console.log("🔵 El puerto ya estaba abierto de una sesión anterior.");
-      
-      // Recuperamos el canal de escritura por si se borró al recargar la página
-      if (!writer && port) {
-        writer = port.writable.getWriter();
-      }
-      return true; // Le decimos a React que la conexión fue un éxito
+      console.log("🔵 El puerto ya estaba abierto.");
+      if (!writer && port) writer = port.writable.getWriter();
+      leerDatos(onMessageReceived); // Volvemos a escuchar
+      return true;
     }
-
-    console.error("Error al conectar Bluetooth:", error);
+    console.error("Error al conectar:", error);
     return false;
   }
 };
 
-export const enviarDatosBluetooth = async (datos) => {
-  if (!writer) {
-    alert("Primero debes conectar el Bluetooth 🔵");
-    return false;
-  }
-  
+// 👈 Esta función escucha todo lo que llega del Arduino
+async function leerDatos(onMessageReceived) {
+  const textDecoder = new TextDecoderStream();
+  const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+  reader = textDecoder.readable.getReader();
+
   try {
-    const encoder = new TextEncoder();
-    await writer.write(encoder.encode(datos));
-    return true;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (value) {
+        console.log("🤖 Arduino dice:", value);
+        if (onMessageReceived) onMessageReceived(value.trim()); // Enviamos el mensaje a React
+      }
+    }
   } catch (error) {
-    console.error("Error al enviar datos:", error);
-    return false;
+    console.error("Error leyendo datos:", error);
   }
+}
+
+export const enviarDatosBluetooth = async (datos) => {
+  // ... (tu código de envío actual, no cambia)
 };
